@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-time Collaborative Editor</title>
+  <script src="https://cdn.jsdelivr.net/npm/socket.io/client-dist/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/loader.js"></script>
+  <style>
+    /* Your styles here */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    #editor {
+      width: 100vw;
+      height: 80vh;
+    }
+
+    #chat {
+      width: 30vw;
+      height: 80vh;
+      border: 1px solid #ccc;
+      overflow-y: scroll;
+      padding: 10px;
+    }
+
+    #messages {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    #messages li {
+      margin-bottom: 10px;
+    }
+
+    input[type="text"] {
+      width: 70%;
+    }
+
+    input[type="submit"] {
+      width: 25%;
+    }
+
+    #language-select {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Undo, Redo, Save buttons and language select -->
+  <button id="undoBtn">Undo</button>
+  <button id="redoBtn">Redo</button>
+  <button id="saveBtn">Save</button>
+  <div id="language-select">
+    <select id="language">
+      <option value="javascript">JavaScript</option>
+      <option value="python">Python</option>
+      <option value="java">Java</option>
+      <option value="cpp">C++</option>
+    </select>
+  </div>
+
+  <!-- Invite form -->
+  <div>
+    <form id="inviteForm">
+      <label for="recipientEmail">Recipient's Email:</label>
+      <input type="email" id="recipientEmail" name="recipientEmail" required>
+      <input type="hidden" id="projectId" name="projectId" value="<%= projectId %>">
+      <button type="submit" id="sendInviteBtn">Send Invite</button>
+    </form>
+  </div>
+
+  <!-- Monaco editor and chat -->
+  <div id="editor"></div>
+  <div id="chat">
+    <ul id="messages"></ul>
+    <form id="form">
+      <input type="text" id="input" placeholder="Type a message...">
+      <input type="submit" value="Send">
+    </form>
+  </div>
+
+  <script>
+
+    require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs' } });
+
+    require(['vs/editor/editor.main'], function() {
+      var editor = monaco.editor.create(document.getElementById('editor'), {
+        value: 'function hello() {\n\talert("Hello, world!");\n}',
+        language: 'javascript'
+      });
+
+      var socket = io();
+
+      editor.getModel().onDidChangeContent(() => {
+        var value = editor.getModel().getValue();
+        socket.emit('code change', value);
+      });
+
+      socket.on('code change', function(code){
+        editor.getModel().setValue(code);
+      });
+
+      socket.on('chat message', function(msg){
+        var item = document.createElement('li');
+        item.textContent = msg;
+        document.getElementById('messages').appendChild(item);
+        document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+      });
+
+      // Use projectId to initialize editor
+      const queryString = window.location.search;
+      const urlParams = new URLSearchParams(queryString);
+      const projectId = urlParams.get('projectId');
+      fetch(`/get-project?projectId=${projectId}`)
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Failed to fetch project data');
+    }
+    return response.json();
+  })
+  .then(data => {
+    if (data && data.code) {
+      const projectId = mongoose.Types.ObjectId(req.query.projectId); // Convert projectId to ObjectId
+      Project.findOne({ _id: projectId })
+        .then(project => {
+          if (project) {
+            editor.getModel().setValue(project.code);
+          } else {
+            console.error('Project not found');
+          }
+        })
+        .catch(error => console.error('Error fetching project:', error));
+    } else {
+      console.error('Invalid project data:', data);
+    }
+  })
+  .catch(error => console.error('Error loading project:', error));
+
+
+      // Invitation form event listener
+      document.getElementById('inviteForm').addEventListener('submit', async (event) => {
+        event.preventDefault(); // Prevent the form from submitting normally
+
+        const projectId = document.getElementById('projectId').value; // Retrieve projectId from hidden input
+        const recipientEmail = document.getElementById('recipientEmail').value;
+        const invitationLink = `http://localhost:8989/editorPage/invitation/${projectId}`;
+
+        const response = await fetch('/send-invitation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email: recipientEmail, projectId: projectId }) // Pass projectId in the request body
+        });
+
+        if (response.ok) {
+          alert('Invitation sent successfully!');
+          res.render('dashboard', { projectId: projectId });
+        } else {
+          alert('Failed to send invitation.');
+        }
+      });
+
+      document.getElementById('undoBtn').addEventListener('click', () => {
+        editor.trigger('undo', 'editor', null);
+      });
+
+      // Send redo request to server
+      document.getElementById('redoBtn').addEventListener('click', () => {
+        socket.emit('redo');
+      });
+
+      // Save button event listener
+      document.getElementById('saveBtn').addEventListener('click', async () => {
+        const code = editor.getValue();
+        await saveCodeToServer(code);
+      });
+
+      async function saveCodeToServer(code) {
+        const response = await fetch('/save-code', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ code })
+        });
+        const data = await response.json();
+        console.log(data.message); // Log success or error message
+      }
+    });
+  </script>
+</body>
+</html>

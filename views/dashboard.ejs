@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Dashboard</h1>
+
+    <!-- Form for creating a new project -->
+    <form action="/create" method="POST" id="createForm">
+        <button type="submit">Create Project</button>
+    </form>
+    <script>
+        document.getElementById('createForm').addEventListener('submit', async (event) => {
+          event.preventDefault(); // Prevent the form from submitting normally
+      
+          try {
+              const formData = new FormData(event.target); // Get form data
+              const data = Object.fromEntries(formData); // Convert FormData to object
+      
+              const response = await fetch('/create', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(data)
+              });
+      
+              if (!response.ok) {
+                  throw new Error('Network response was not ok');
+              }
+      
+              const responseData = await response.json();
+              console.log('Success:', responseData);
+              // Redirect to the editor page with the project ID
+              window.location.href = `/editorPage?projectId=${responseData.projectId}`;
+          } catch (error) {
+              console.error('Error:', error);
+              // Handle errors (e.g., show an alert to the user)
+          }
+      });
+      
+      
+      </script>
+</body>
+</html>
+
