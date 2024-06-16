@@ -1,198 +1,400 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Real-time Collaborative Editor</title>
-  <script src="https://cdn.jsdelivr.net/npm/socket.io/client-dist/socket.io.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/loader.js"></script>
-  <style>
-    /* Your styles here */
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-
-    #editor {
-      width: 100vw;
-      height: 80vh;
-    }
-
-    #chat {
-      width: 30vw;
-      height: 80vh;
-      border: 1px solid #ccc;
-      overflow-y: scroll;
-      padding: 10px;
-    }
-
-    #messages {
-      list-style-type: none;
-      padding: 0;
-    }
-
-    #messages li {
-      margin-bottom: 10px;
-    }
-
-    input[type="text"] {
-      width: 70%;
-    }
-
-    input[type="submit"] {
-      width: 25%;
-    }
-
-    #language-select {
-      margin-bottom: 10px;
-    }
-  </style>
-</head>
-<body>
-  <!-- Undo, Redo, Save buttons and language select -->
-  <button id="undoBtn">Undo</button>
-  <button id="redoBtn">Redo</button>
-  <button id="saveBtn">Save</button>
-  <div id="language-select">
-    <select id="language">
-      <option value="javascript">JavaScript</option>
-      <option value="python">Python</option>
-      <option value="java">Java</option>
-      <option value="cpp">C++</option>
-    </select>
-  </div>
-
-  <!-- Invite form -->
-  <div>
-    <form id="inviteForm">
-      <label for="recipientEmail">Recipient's Email:</label>
-      <input type="email" id="recipientEmail" name="recipientEmail" required>
-      <input type="hidden" id="projectId" name="projectId" value="<%= projectId %>">
-      <button type="submit" id="sendInviteBtn">Send Invite</button>
-    </form>
-  </div>
-
-  <!-- Monaco editor and chat -->
-  <div id="editor"></div>
-  <div id="chat">
-    <ul id="messages"></ul>
-    <form id="form">
-      <input type="text" id="input" placeholder="Type a message...">
-      <input type="submit" value="Send">
-    </form>
-  </div>
-
-  <script>
-
-    require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs' } });
-
-    require(['vs/editor/editor.main'], function() {
-      var editor = monaco.editor.create(document.getElementById('editor'), {
-        value: 'function hello() {\n\talert("Hello, world!");\n}',
-        language: 'javascript'
-      });
-
-      var socket = io();
-
-      editor.getModel().onDidChangeContent(() => {
-        var value = editor.getModel().getValue();
-        socket.emit('code change', value);
-      });
-
-      socket.on('code change', function(code){
-        editor.getModel().setValue(code);
-      });
-
-      socket.on('chat message', function(msg){
-        var item = document.createElement('li');
-        item.textContent = msg;
-        document.getElementById('messages').appendChild(item);
-        document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
-      });
-
-      // Use projectId to initialize editor
-      const queryString = window.location.search;
-      const urlParams = new URLSearchParams(queryString);
-      const projectId = urlParams.get('projectId');
-      fetch(`/get-project?projectId=${projectId}`)
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Failed to fetch project data');
-    }
-    return response.json();
-  })
-  .then(data => {
-    if (data && data.code) {
-      const projectId = mongoose.Types.ObjectId(req.query.projectId); // Convert projectId to ObjectId
-      Project.findOne({ _id: projectId })
-        .then(project => {
-          if (project) {
-            editor.getModel().setValue(project.code);
-          } else {
-            console.error('Project not found');
-          }
-        })
-        .catch(error => console.error('Error fetching project:', error));
-    } else {
-      console.error('Invalid project data:', data);
-    }
-  })
-  .catch(error => console.error('Error loading project:', error));
-
-
-      // Invitation form event listener
-      document.getElementById('inviteForm').addEventListener('submit', async (event) => {
-        event.preventDefault(); // Prevent the form from submitting normally
-
-        const projectId = document.getElementById('projectId').value; // Retrieve projectId from hidden input
-        const recipientEmail = document.getElementById('recipientEmail').value;
-        const invitationLink = `http://localhost:8989/editorPage/invitation/${projectId}`;
-
-        const response = await fetch('/send-invitation', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email: recipientEmail, projectId: projectId }) // Pass projectId in the request body
-        });
-
-        if (response.ok) {
-          alert('Invitation sent successfully!');
-          res.render('dashboard', { projectId: projectId });
-        } else {
-          alert('Failed to send invitation.');
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Collaborative Editor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.49.0/min/vs/loader.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
         }
-      });
 
-      document.getElementById('undoBtn').addEventListener('click', () => {
-        editor.trigger('undo', 'editor', null);
-      });
+        #controls,
+        #creatorControls {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #343a40;
+            color: #ffffff;
+        }
 
-      // Send redo request to server
-      document.getElementById('redoBtn').addEventListener('click', () => {
-        socket.emit('redo');
-      });
+        #main {
+            display: flex;
+            flex: 1;
+        }
 
-      // Save button event listener
-      document.getElementById('saveBtn').addEventListener('click', async () => {
-        const code = editor.getValue();
-        await saveCodeToServer(code);
-      });
+        #user-list-container {
+            width: 20vw;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            overflow-y: auto;
+        }
 
-      async function saveCodeToServer(code) {
-        const response = await fetch('/save-code', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ code })
-        });
-        const data = await response.json();
-        console.log(data.message); // Log success or error message
-      }
+        #user-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #user-list li {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #ffffff;
+            transition: background-color 0.3s ease;
+        }
+
+        #user-list li:hover {
+            background-color: #f1f3f5;
+        }
+
+        #user-list li .user-icon {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+            background-color: #6c757d;
+            border-radius: 50%;
+            display: inline-block;
+            background-image: url('https://th.bing.com/th/id/OIP.WpnGIPj1DKAGo-CP64znTwHaHa?rs=1&pid=ImgDetMain');
+            background-size: cover;
+        }
+
+        #editor-container {
+            flex: 1;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #editor {
+            flex: 1;
+            direction: ltr;
+            text-align: left;
+        }
+
+        #chat {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 30vw;
+            height: 20vh;
+            border: 1px solid #ced4da;
+            background-color: #ffffff;
+            overflow-y: scroll;
+            padding: 10px;
+        }
+
+        #messages {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #messages li {
+            margin-bottom: 10px;
+        }
+
+        #form {
+            display: flex;
+        }
+
+        #input {
+            flex: 1;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="controls" class="container-fluid">
+        <div class="btn-group" role="group">
+            <button id="undoBtn" class="btn btn-primary">Undo</button>
+            <button id="redoBtn" class="btn btn-primary">Redo</button>
+            <button id="saveBtn" class="btn btn-primary">Save</button>
+            <button id="revertBtn" class="btn btn-warning">Revert</button>
+        </div>
+        <div id="language-select" class="form-group">
+            <select id="language" class="form-select">
+                <option value="javascript">JavaScript</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="cpp">C++</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="creatorControls" class="container-fluid mt-2" style="display: none;">
+        <button id="deleteProjectBtn" class="btn btn-danger">Delete Project</button>
+        <button id="deleteUserBtn" class="btn btn-danger">Delete User</button>
+    </div>
+
+    <div class="container-fluid mt-2">
+        <form id="inviteForm" class="form-inline">
+            <label for="recipientEmail" class="mr-2">Recipient's Email:</label>
+            <input type="email" id="recipientEmail" name="recipientEmail" class="form-control mr-2" required>
+            <input type="hidden" id="projectId" name="projectId" value="">
+            <button type="submit" id="sendInviteBtn" class="btn btn-primary">Send Invite</button>
+        </form>
+    </div>
+
+    <div id="main">
+        <div id="user-list-container">
+            <h5>Connected Users</h5>
+            <ul id="user-list" class="connected-users list-unstyled"></ul>
+        </div>
+        <div id="editor-container">
+            <div id="editor"></div>
+        </div>
+    </div>
+
+    <div id="chat">
+        <ul id="messages"></ul>
+        <form id="form">
+            <input type="text" id="input" class="form-control" placeholder="Type a message...">
+            <input type="submit" value="Send" class="btn btn-primary">
+        </form>
+    </div>
+
+    <script>document.addEventListener('DOMContentLoaded', () => {
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.49.0/min/vs' } });
+
+        require(['vs/editor/editor.main'], function() {
+            const editor = monaco.editor.create(document.getElementById('editor'), {
+                value: '',
+                language: 'javascript',
+                automaticLayout: true,
+                direction: 'ltr'
+            });
+
+            const socket = io();
+
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            const projectId = urlParams.get('projectId');
+            const username = urlParams.get('username');
+            const isCreator = urlParams.get('isCreator') === 'true';
+
+            if (!projectId) {
+                console.error('Project ID is missing from URL parameters.');
+                return;
+            }
+
+            if (isCreator) {
+                document.getElementById('creatorControls').style.display = 'block';
+            }
+
+            document.getElementById('projectId').value = projectId;
+
+            socket.emit('join', { projectId, username });
+
+            fetch(`/get-project?projectId=${projectId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.code) {
+                        editor.setValue(data.code);
+                    }
+                })
+                .catch(error => console.error('Error loading project:', error));
+
+            let isLocalChange = false;
+
+            editor.onDidChangeModelContent((event) => {
+                if (isLocalChange) return;
+                const code = editor.getValue();
+                socket.emit('editorChange', { content: code, projectId });
+            });
+
+            socket.on('editorUpdate', ({ content }) => {
+                const currentContent = editor.getValue();
+                if (content !== currentContent) {
+                    isLocalChange = true;
+                    const cursorPosition = editor.getPosition();
+                    editor.setValue(content);
+                    editor.setPosition(cursorPosition);
+                    isLocalChange = false;
+                }
+            });
+// Listen for the 'redirect' event
+socket.on('redirect', (destination) => {
+    // Redirect to the specified destination
+    window.location.href = destination;
+});
+
+            socket.on('connectedUsers', (users) => {
+                const userListElem = document.getElementById('user-list');
+                userListElem.innerHTML = '';
+                users.forEach(user => {
+                    const li = document.createElement('li');
+                    const userIcon = document.createElement('span');
+                    userIcon.className = 'user-icon';
+                    li.appendChild(userIcon);
+                    const userName = document.createElement('span');
+                    userName.textContent = user;
+                    li.appendChild(userName);
+                    userListElem.appendChild(li);
+                });
+            });
+
+            document.getElementById('form').addEventListener('submit', (event) => {
+                event.preventDefault();
+                const input = document.getElementById('input');
+                const message = input.value.trim();
+                if (message) {
+                    socket.emit('chatMessage', { message });
+                    input.value = ''; // Clear the input after sending
+                }
+            });
+
+            socket.on('chatMessage', (message) => {
+                const messages = document.getElementById('messages');
+                const li = document.createElement('li');
+                li.textContent = message;
+                messages.appendChild(li);
+                messages.scrollTop = messages.scrollHeight; // Scroll to bottom
+            });
+
+      
+            document.getElementById('inviteForm').addEventListener('submit', async (event) => {
+event.preventDefault();
+const recipientEmail = document.getElementById('recipientEmail').value;
+const projectId = document.getElementById('projectId').value;
+
+try {
+    const response = await fetch('/send-invitation', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ recipientEmail, projectId }), // Use recipientEmail here
     });
-  </script>
+
+    if (response.ok) {
+        alert('Invitation sent successfully!');
+    } else {
+        alert('Failed to send invitation.');
+    }
+} catch (error) {
+    console.error('Error sending invitation:', error);
+    alert('An error occurred while sending the invitation.');
+}
+});
+
+
+            document.getElementById('saveBtn').addEventListener('click', async () => {
+                const code = editor.getValue();
+                try {
+                    await fetch('/save-project', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ projectId, code }),
+                    });
+                    alert('Code saved successfully!');
+                } catch (error) {
+                    console.error('Error saving code:', error);
+                    alert('Failed to save code.');
+                }
+            });
+
+            document.getElementById('revertBtn').addEventListener('click', () => {
+                socket.emit('revertCode', { projectId });
+            });
+
+            document.getElementById('deleteProjectBtn').addEventListener('click', async () => {
+                try {
+                    await fetch('/delete-project', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ projectId }),
+                    });
+                    alert('Project deleted successfully!');
+                    window.location.href = '/dashboard';
+                } catch (error) {
+                    console.error('Error deleting project:', error);
+                    alert('Failed to delete project.');
+                }
+            });
+            window.onload = function() {
+const projectId = new URLSearchParams(window.location.search).get('projectId');
+
+fetch(`/get-project-code?projectId=${projectId}`)
+    .then(response => response.json())
+    .then(data => {
+        const codeEditor = monaco.editor.create(document.getElementById('editor'), {
+            value: data.code,
+            language: 'javascript'
+        });
+    })
+    .catch(error => {
+        console.error('Failed to load project code:', error);
+    });
+};document.getElementById('deleteUserBtn').addEventListener('click', async () => {
+const usernameToDelete = prompt('Enter the username to delete:');
+if (usernameToDelete) {
+    try {
+        await fetch('/delete-user', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ projectId, username: usernameToDelete }),
+        });
+        alert(`User ${usernameToDelete} deleted successfully!`);
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        alert(`Failed to delete user ${usernameToDelete}.`);
+    }
+}
+});
+
+socket.on('userDeleted', (deletedUsername) => {
+   
+    const userList = document.getElementById('user-list');
+    const liToRemove = Array.from(userList.children).find(li => li.textContent.includes(deletedUsername));
+    if (liToRemove) {
+        liToRemove.remove();
+    }
+  
+    window.location.href = '/dashboard';
+});
+
+
+            document.getElementById('language').addEventListener('change', (event) => {
+                const newLanguage = event.target.value;
+                monaco.editor.setModelLanguage(editor.getModel(), newLanguage);
+            });
+
+            socket.on('revertedCode', ({ content }) => {
+                editor.setValue(content);
+            });
+            // Inside the socket.on('connect', ...) event handler in your frontend
+
+
+
+            socket.on('projectDeleted', () => {
+                alert('The project has been deleted.');
+                window.location.href = '/dashboard';
+            });
+        });
+    });
+    </script>
 </body>
+
 </html>

@@ -1,34 +1,49 @@
 const Project = require('../models/Project');
 const { sendInvitation } = require('../emailService');
-const Code =require('../models/CodeModel')
+
 exports.createProject = async (requestData) => {
     try {
-        const projectId = generateUniqueId(); 
-        const invitationLink = `http://localhost:8989/editorPage/${projectId}`;
-        console.log('invitation link:',invitationLink)
-        console.log(projectId);
-        const newProject = new Project({
-            projectId,
-        });
+        const projectId = generateUniqueId();
+        const newProject = new Project({ projectId, code: '' });
         await newProject.save();
-        await sendInvitation(requestData.email, invitationLink,projectId);
+        const invitationLink = `http://localhost:8989/editorPage/invitation/${projectId}`;
+        await sendInvitation(requestData.email, invitationLink, projectId);
         return { projectId };
     } catch (error) {
         console.error('Error creating project:', error);
         throw new Error('Failed to create project');
     }
 };
-exports.saveCode=async(req,res)=>{
-    try{
-        const{code,projectId}=req.body
-        await Code.findOneAndUpdate({projectId},{code},{upsert:true})
-    res.status(200).json({message:'code saved succesfully'})
-    }catch(error){
-        console.error('error in saving code', error)
-        res.status(500).json({error:'failed to save code'})
+
+exports.loadProject = async (req, res) => {
+    const { projectId } = req.params;
+    try {
+        const project = await Project.findOne({ projectId }).exec();
+        if (!project) {
+            return res.status(404).json({ error: 'Project not found' });
+        }
+        res.render('editor', { projectId, code: project.code });
+    } catch (error) {
+        console.error('Error loading project:', error);
+        res.status(500).json({ error: 'Failed to load project' });
     }
-}
+};
+
+exports.saveCode = async ({ code, projectId }) => {
+    try {
+        const project = await Project.findOne({ projectId });
+        if (project) {
+            project.code = code;
+            await project.save();
+        } else {
+            throw new Error('Project not found');
+        }
+    } catch (error) {
+        console.error('Error saving code:', error);
+        throw error;
+    }
+};
+
 function generateUniqueId() {
-  
     return Math.random().toString(36).substring(7);
 }

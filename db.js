@@ -1,9 +1,18 @@
-const exress=require('express')
-const mongoose=require('mongoose')
-mongoose.connect(process.env.MONGODB_URI,{useNewUrlParser:true,useUnifiedTopology:true})
-const db=mongoose.connection;
-db.on('error',console.error.bind(console,'Mongodbd connection error'))
-db.once('open',()=>{
-    console.log('connected to mongodb')
-})
-module.exports=db;
+require('dotenv').config();
+
+const mongoose = require('mongoose');
+
+async function connectToDatabase() {
+    try {
+        const uri = process.env.MONGODB_URI; // Use the environment variable for the MongoDB URI
+        await mongoose.connect(uri, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+        console.log('Connected to MongoDB');
+    } catch (error) {
+        console.error('Error connecting to MongoDB:', error);
+    }
+}
+
+module.exports = connectToDatabase;

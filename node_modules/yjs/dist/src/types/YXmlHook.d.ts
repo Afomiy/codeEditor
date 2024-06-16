@@ -17,6 +17,10 @@ export class YXmlHook extends YMap<any> {
      */
     _copy(): YXmlHook;
     /**
+     * Makes a copy of this data type that can be included somewhere else.
+     *
+     * Note that the content is only readable _after_ it has been included somewhere in the Ydoc.
+     *
      * @return {YXmlHook}
      */
     clone(): YXmlHook;

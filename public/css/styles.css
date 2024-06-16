@@ -1,0 +1,26 @@
+.login-body, .signup-body {
+    background: linear-gradient(45deg, #85FFBD 0%, #FFFB7D 100%);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card {
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+}
+
+.btn-primary {
+    background-color: #FF5C93;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #FF3366;
+}

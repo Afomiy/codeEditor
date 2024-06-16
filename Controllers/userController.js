@@ -9,8 +9,9 @@ exports.loginUser = async (req, res) => {
     try {
         const user = await User.findOne({ email, password });
         if (!user) throw new Error('Invalid email or password');
-        // Add session or token handling here
+        
         res.send('Login successful');
+        res.redirect('dashboard')
     } catch (err) {
         res.status(401).send(err.message);
     }
@@ -25,8 +26,9 @@ exports.signupUser = async (req, res) => {
     const user = new User({ username, email, password });
     try {
         await user.save();
-        // Add session or token handling here
+        
         res.send('Signup successful');
+        res.redirect('dashboard')
     } catch (err) {
         res.status(400).send(err.message);
     }

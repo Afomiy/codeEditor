@@ -1,0 +1,59 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+#controls, #creatorControls {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: #f4f4f4;
+}
+
+#editor {
+    flex: 1;
+    width: 70vw;
+}
+
+#chat {
+    width: 30vw;
+    height: 20vh;
+    border: 1px solid #ccc;
+    overflow-y: scroll;
+    padding: 10px;
+}
+
+#messages {
+    list-style-type: none;
+    padding: 0;
+}
+
+#messages li {
+    margin-bottom: 10px;
+}
+
+input[type="text"] {
+    width: 70%;
+}
+
+input[type="submit"] {
+    width: 25%;
+}
+
+#language-select {
+    margin-bottom: 10px;
+}
+
+#users {
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    padding: 10px;
+}
+
+#creatorControls {
+    display: none; /* Default to hidden */
+}

@@ -81,7 +81,7 @@ export function writeRelativePosition(encoder: encoding.Encoder, rpos: RelativeP
 export function encodeRelativePosition(rpos: RelativePosition): Uint8Array;
 export function readRelativePosition(decoder: decoding.Decoder): RelativePosition;
 export function decodeRelativePosition(uint8Array: Uint8Array): RelativePosition;
-export function createAbsolutePositionFromRelativePosition(rpos: RelativePosition, doc: Doc): AbsolutePosition | null;
+export function createAbsolutePositionFromRelativePosition(rpos: RelativePosition, doc: Doc, followUndoneDeletions?: boolean): AbsolutePosition | null;
 export function compareRelativePositions(a: RelativePosition | null, b: RelativePosition | null): boolean;
 import { ID } from "./ID.js";
 import { AbstractType } from "../types/AbstractType.js";

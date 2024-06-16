@@ -1,0 +1,37 @@
+/* Custom CSS for Dashboard component */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  
+  .col {
+    flex: 0 0 calc(50% - 10px);
+    margin-bottom: 20px;
+  }
+  
+  .form-label {
+    font-weight: bold;
+  }
+  
+  .btn {
+    cursor: pointer;
+  }
+  
+  /* Styles for Create Project form */
+  .create-project-form {
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  /* Styles for Join Project button */
+  .join-project-btn {
+    width: 100%;
+  }
+  

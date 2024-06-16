@@ -1,50 +1,248 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            background: url('https://th.bing.com/th/id/R.c21a1e0c97117020db135ccfb0bf7d99?rik=hY1YQAc06rK1Xg&riu=http%3a%2f%2fwww.baltana.com%2ffiles%2fwallpapers-8%2fComputer-Coding-HD-Wallpaper-24750.jpg&ehk=yE2H%2fob0s1yvNHVFxWvHIXGnq42tT%2fafZSjwoIyeyFs%3d&risl=&pid=ImgRaw&r=0') no-repeat center center fixed;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: backgroundMotion 20s infinite alternate;
+        }
+
+        @keyframes backgroundMotion {
+            0% {
+                background-position: center center;
+            }
+
+            50% {
+                background-position: center top;
+            }
+
+            100% {
+                background-position: center center;
+            }
+        }
+
+        .container {
+            margin-top: 50px;
+        }
+
+        .card {
+            background-color: transparent;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background-color: #181a1c;
+            color: #fff;
+            border-radius: 10px 10px 0 0;
+            padding: 10px 20px;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .form-label {
+            color: #333;
+        }
+
+        .form-control {
+            border-radius: 5px;
+        }
+
+        .btn-primary {
+            background-color: #f39c12;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: #e67e22;
+        }
+
+        @keyframes beam {
+            0% {
+                background-color: #3498db;
+            }
+
+            50% {
+                background-color: #f39c12;
+            }
+
+            100% {
+                background-color: #3498db;
+            }
+        }
+
+        .animated-beam {
+            animation: beam 4s infinite;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Dashboard</h1>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="mb-0">Create Project</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="createProjectForm">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username:</label>
+                                <input type="text" id="username" name="username" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary animated-beam">Create Project</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="mb-0">Join Project</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="joinProjectForm">
+                            <div class="mb-3">
+                                <label for="joinUsername" class="form-label">Username:</label>
+                                <input type="text" id="joinUsername" name="username" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="projectLink" class="form-label">Project Link:</label>
+                                <input type="text" id="projectLink" name="projectLink" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary animated-beam">Join Project</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="mb-0">Go to Existing Project</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="goToProjectForm">
+                            <div class="mb-3">
+                                <label for="goToUsername" class="form-label">Username:</label>
+                                <input type="text" id="goToUsername" name="username" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="projectId" class="form-label">Project ID:</label>
+                                <input type="text" id="projectId" name="projectId" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary animated-beam">Go to Project</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- Form for creating a new project -->
-    <form action="/create" method="POST" id="createForm">
-        <button type="submit">Create Project</button>
-    </form>
     <script>
-        document.getElementById('createForm').addEventListener('submit', async (event) => {
-          event.preventDefault(); // Prevent the form from submitting normally
-      
-          try {
-              const formData = new FormData(event.target); // Get form data
-              const data = Object.fromEntries(formData); // Convert FormData to object
-      
-              const response = await fetch('/create', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify(data)
-              });
-      
-              if (!response.ok) {
-                  throw new Error('Network response was not ok');
-              }
-      
-              const responseData = await response.json();
-              console.log('Success:', responseData);
-              // Redirect to the editor page with the project ID
-              window.location.href = `/editorPage?projectId=${responseData.projectId}`;
-          } catch (error) {
-              console.error('Error:', error);
-              // Handle errors (e.g., show an alert to the user)
-          }
-      });
-      
-      
-      </script>
-</body>
-</html>
+       document.getElementById('createProjectForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    console.log('Create Project button clicked');
+    const usernameInput = document.getElementById('username');
+    if (usernameInput) {
+        const username = usernameInput.value;
+        console.log('Creating project for username:', username);
+        fetch('/create-project', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const projectId = data.projectId;
+            console.log('Project created successfully, redirecting...');
+            window.location.href = `/editorPage?projectId=${projectId}&username=${username}&isCreator=true`;
+        })
+        .catch(error => {
+            console.error('Failed to create project:', error);
+        });
+    }
+});
 
+
+document.getElementById('joinProjectForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const joinUsernameInput = document.getElementById('joinUsername');
+    const projectLinkInput = document.getElementById('projectLink');
+    if (joinUsernameInput && projectLinkInput) {
+        const username = joinUsernameInput.value;
+        const projectLink = projectLinkInput.value;
+        fetch('/join-project', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, projectLink })
+        })
+        .then(response => {
+            console.log(response); // Log the raw response
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data); // Log the parsed JSON data
+            window.location.href = data.redirectUrl;
+        })
+        .catch(error => {
+            console.error('Failed to join project:', error);
+        });
+    }
+});
+
+
+document.getElementById('goToProjectForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const goToUsernameInput = document.getElementById('goToUsername');
+    const projectIdInput = document.getElementById('projectId');
+    if (goToUsernameInput && projectIdInput) {
+        const username = goToUsernameInput.value;
+        const projectId = projectIdInput.value;
+        fetch('/go-to-project', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, projectId })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            window.location.href = data.redirectUrl;
+        })
+        .catch(error => {
+            console.error('Failed to go to project:', error);
+        });
+    }
+});
+
+
+    </script>
+</body>
+
+</html>

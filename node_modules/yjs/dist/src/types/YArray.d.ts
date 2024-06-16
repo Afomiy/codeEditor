@@ -4,12 +4,7 @@
  * @extends YEvent<YArray<T>>
  */
 export class YArrayEvent<T> extends YEvent<YArray<T>> {
-    /**
-     * @param {YArray<T>} yarray The changed type
-     * @param {Transaction} transaction The transaction object
-     */
-    constructor(yarray: YArray<T>, transaction: Transaction);
-    _transaction: Transaction;
+    constructor(target: YArray<T>, transaction: Transaction);
 }
 /**
  * A shared Array implementation.
@@ -52,6 +47,10 @@ export class YArray<T> extends AbstractType<YArrayEvent<T>> implements Iterable<
      */
     _copy(): YArray<T>;
     /**
+     * Makes a copy of this data type that can be included somewhere else.
+     *
+     * Note that the content is only readable _after_ it has been included somewhere in the Ydoc.
+     *
      * @return {YArray<T>}
      */
     clone(): YArray<T>;
@@ -82,9 +81,9 @@ export class YArray<T> extends AbstractType<YArrayEvent<T>> implements Iterable<
      */
     push(content: Array<T>): void;
     /**
-     * Preppends content to this YArray.
+     * Prepends content to this YArray.
      *
-     * @param {Array<T>} content Array of content to preppend.
+     * @param {Array<T>} content Array of content to prepend.
      */
     unshift(content: Array<T>): void;
     /**
@@ -108,7 +107,8 @@ export class YArray<T> extends AbstractType<YArrayEvent<T>> implements Iterable<
      */
     toArray(): Array<T>;
     /**
-     * Transforms this YArray to a JavaScript Array.
+     * Returns a portion of this YArray into a JavaScript Array selected
+     * from start to end (end not included).
      *
      * @param {number} [start]
      * @param {number} [end]
@@ -132,7 +132,7 @@ export class YArray<T> extends AbstractType<YArrayEvent<T>> implements Iterable<
      */
     map<M>(f: (arg0: T, arg1: number, arg2: YArray<T>) => M): M[];
     /**
-     * Executes a provided function once on overy element of this YArray.
+     * Executes a provided function once on every element of this YArray.
      *
      * @param {function(T,number,YArray<T>):void} f A function to execute on every element of this YArray.
      */
